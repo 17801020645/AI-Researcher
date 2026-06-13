@@ -1,0 +1,14 @@
+# AI-Researcher 主机环境依赖
+# 要求 Python >= 3.11（见 setup.cfg）
+#
+# 安装方式：
+#   pip install -r requirements.txt
+#   playwright install
+#
+# 或使用 uv：
+#   uv pip install -r requirements.txt
+#   playwright install
+#
+# 说明：以 editable 模式安装本项目，依赖项由 setup.cfg 的 install_requires 统一管理。
+
+-e .

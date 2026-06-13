@@ -25,7 +25,7 @@
 | 项目 | 要求 |
 |------|------|
 | 操作系统 | Linux / macOS / Windows（WSL2 推荐） |
-| Python | **3.11+**（见 [setup.cfg](../setup.cfg)） |
+| Python | **3.11+**（见 [setup.cfg](../setup.cfg)、[requirements.txt](../requirements.txt)） |
 | Docker | Docker Desktop 或 Docker Engine（Research Agent 代码执行必需） |
 | GPU | 可选；ML Agent 在容器内训练时建议配备 NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) |
 | 磁盘 | 建议 ≥ 20 GB（Docker 镜像、依赖、workplace 产出） |
@@ -35,7 +35,7 @@
 
 | 工具 | 用途 | 安装方式 |
 |------|------|----------|
-| [uv](https://docs.astral.sh/uv/) 或 pip | Python 包管理 | 见下文安装步骤 |
+| [uv](https://docs.astral.sh/uv/) 或 pip | Python 包管理 | `pip install -r requirements.txt`（见下文） |
 | Playwright 浏览器 | Browser Agent 网页交互 | `playwright install` |
 | pdflatex | Paper Agent 编译 PDF | 系统级 TeX 发行版（TeX Live / MacTeX） |
 | git | 克隆仓库、Agent 拉代码 | 系统自带或包管理器安装 |
@@ -50,13 +50,7 @@
 
 以下问题来自当前源码，部署文档中给出 workaround，**不修改源码也可按说明运行**：
 
-1. **`python-dotenv` 未列入 `install_requires`**  
-   [main_ai_researcher.py](../main_ai_researcher.py)、[research_agent/constant.py](../research_agent/constant.py) 均使用 `load_dotenv()`，需手动安装：
-   ```bash
-   pip install python-dotenv
-   ```
-
-2. **`PLATFORM` 环境变量未在 `constant.py` 中定义**  
+1. **`PLATFORM` 环境变量未在 `constant.py` 中定义**  
    [docker_env.py](../research_agent/inno/environment/docker_env.py) 从 `constant` 导入 `PLATFORM`，但 [constant.py](../research_agent/constant.py) 缺少该变量，首次创建 Docker 容器可能报 `ImportError`。  
    **Workaround**：在 `research_agent/constant.py` 末尾添加：
    ```python
@@ -64,17 +58,21 @@
    ```
    并在 `.env` 中设置 `PLATFORM=linux/amd64`（Apple Silicon 拉取 amd64 镜像时常用）。
 
-3. **Web GUI 硬编码代理**  
+2. **Web GUI 硬编码代理**  
    [web_ai_researcher.py](../web_ai_researcher.py) 第 21–23 行写死了 `http_proxy`/`https_proxy`。非该内网环境请注释这三行后再启动 GUI。
 
-4. **`setup.cfg` 中 console_scripts 不可用**  
+3. **`setup.cfg` 中 console_scripts 不可用**  
    `ai-researcher`、`paper-agent`、`benchmark` 指向不存在的 `cli.py`，请使用本文档中的 Python 入口命令。
 
 ---
 
 ## 2. 安装步骤
 
-### 2.1 克隆与 Python 环境（推荐 uv）
+### 2.1 克隆与 Python 环境
+
+项目根目录提供 [requirements.txt](../requirements.txt)，以 editable 模式（`-e .`）安装本项目，并从 [setup.cfg](../setup.cfg) 的 `install_requires` 拉取全部 Python 依赖（含 `python-dotenv`、`litellm`、`gradio` 等）。
+
+**方式 A：uv（推荐）**
 
 ```bash
 # 安装 uv（可选）
@@ -88,20 +86,23 @@ cd AI-Researcher
 # 创建虚拟环境并安装
 uv venv --python 3.11
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-uv pip install -e .
-pip install python-dotenv          # 补充缺失依赖
+uv pip install -r requirements.txt
 playwright install
 ```
 
-等价的 pip 方式：
+**方式 B：pip**
 
 ```bash
+git clone https://github.com/HKUDS/AI-Researcher.git
+cd AI-Researcher
+
 python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-pip install python-dotenv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 playwright install
 ```
+
+> **说明**：`requirements.txt` 不包含 Playwright 浏览器二进制，安装 Python 包后仍需执行 `playwright install`。
 
 ### 2.2 配置文件初始化
 
@@ -543,7 +544,7 @@ docker stop <container_id> && docker rm <container_id>
 按顺序执行 smoke test，确认环境可用：
 
 - [ ] **1. Docker**：`docker ps` 无报错
-- [ ] **2. Python 环境**：`python -c "import litellm, gradio; print('ok')"`
+- [ ] **2. Python 环境**：`pip install -r requirements.txt && playwright install`，然后 `python -c "import litellm, gradio, dotenv; print('ok')"`
 - [ ] **3. 配置文件**：`cp .env.template .env` 并填入有效 API Key
 - [ ] **4. PLATFORM workaround**：确认 `constant.py` 已补充 `PLATFORM`（见 1.4 节）
 - [ ] **5. 代理**：非内网环境已注释 `web_ai_researcher.py` 中硬编码 proxy
