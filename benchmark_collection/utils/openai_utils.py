@@ -18,14 +18,35 @@ def count_tokens(text: str, model: str = "gpt-4") -> int:
     
     return len(encoding.encode(text))
 
+def _resolve_paper_agent_credentials(api_key: str | None = None):
+    """Resolve API key and base URL for Paper Agent (OpenAI-compatible providers)."""
+    key = (
+        api_key
+        or os.getenv('OPENAI_API_KEY')
+        or os.getenv('DEEPSEEK_API_KEY')
+        or os.getenv('OPENROUTER_API_KEY')
+    )
+    base_url = (
+        os.getenv('API_BASE_URL')
+        or os.getenv('DEEPSEEK_API_BASE')
+        or os.getenv('OPENROUTER_API_BASE')
+    )
+    if base_url is None and os.getenv('DEEPSEEK_API_KEY') and not os.getenv('OPENAI_API_KEY'):
+        base_url = 'https://api.deepseek.com'
+    if key is None:
+        raise ValueError(
+            "API key must be provided or set via OPENAI_API_KEY, DEEPSEEK_API_KEY, "
+            "or OPENROUTER_API_KEY (e.g. in .env at repo root or paper_agent/.env)"
+        )
+    return key, base_url
+
+
 class GPTClient:
-    def __init__(self, api_key: str = None, model: str = 'gpt-4o-mini-2024-07-18'):# 'gpt-4o-mini-2024-07-18'):# 'o1-mini-2024-09-12'):
-        if api_key is None:
-            api_key = os.getenv('OPENAI_API_KEY')
-            api_url = os.getenv('API_BASE_URL')
-            if api_key is None:
-                raise ValueError("API key must be provided or set in OPENAI_API_KEY environment variable")
-        
+    def __init__(self, api_key: str = None, model: str = None):
+        api_key, api_url = _resolve_paper_agent_credentials(api_key)
+        if model is None:
+            model = os.getenv('PAPER_AGENT_MODEL', 'gpt-4o-mini-2024-07-18')
+
         self.client = openai.AsyncClient(
             api_key=api_key,
             base_url=api_url,

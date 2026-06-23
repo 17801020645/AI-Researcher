@@ -422,5 +422,13 @@ async def methodology_composing(research_field: str, instance_id: str):
 
 
 if __name__ == "__main__":
-    # 程序入口：执行异步主函数
-    asyncio.run(methodology_composing())
+    import argparse
+    from dotenv import load_dotenv
+
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+
+    parser = argparse.ArgumentParser(description="单独生成 methodology 章节")
+    parser.add_argument("--research_field", type=str, default="vq")
+    parser.add_argument("--instance_id", type=str, default="rotation_vq")
+    args = parser.parse_args()
+    asyncio.run(methodology_composing(args.research_field, args.instance_id))

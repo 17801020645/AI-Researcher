@@ -6,7 +6,16 @@ import random
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from dotenv import load_dotenv
+
+# 单独运行 composing 模块时自动加载 .env（根目录优先，paper_agent/.env 补充）
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(_REPO_ROOT, ".env"))
+load_dotenv(os.path.join(_REPO_ROOT, "paper_agent", ".env"), override=False)
+
 from benchmark_collection.utils.openai_utils import GPTClient
 
 
@@ -40,15 +49,17 @@ class SectionComposer(ABC):
     """
 
     def __init__(self, research_field: str, section_name: str,
-                 structure_iterations: int = 3, gpt_model='gpt-4o-mini-2024-07-18'):
+                 structure_iterations: int = 3, gpt_model: Optional[str] = None):
         """初始化 SectionComposer。
 
         参数:
             research_field: 研究领域标识，用于构建目录路径。
             section_name: 目标章节名称（如 'introduction'）。
             structure_iterations: 结构优化的最大迭代次数。
-            gpt_model: GPTClient 使用的 GPT 模型标识。
+            gpt_model: LLM 模型名；默认读环境变量 PAPER_AGENT_MODEL。
         """
+        if gpt_model is None:
+            gpt_model = os.getenv('PAPER_AGENT_MODEL', 'gpt-4o-mini-2024-07-18')
         self.gpt_client = GPTClient(model=gpt_model)
         self.structure_iterations = structure_iterations
         self.research_field = research_field
