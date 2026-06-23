@@ -1,35 +1,65 @@
 from research_agent.inno.types import Agent
 from research_agent.inno.tools import (
-    gen_code_tree_structure, execute_command, read_file, create_file, write_file, list_files, create_directory, run_python, terminal_page_down, terminal_page_up, terminal_page_to
+    gen_code_tree_structure, execute_command, read_file, create_file,
+    write_file, list_files, create_directory, run_python,
+    terminal_page_down, terminal_page_up, terminal_page_to
 )
 from research_agent.inno.util import make_message, make_tool_message
 from research_agent.inno.registry import register_agent
 from research_agent.inno.environment.docker_env import DockerEnv, with_env
 from inspect import signature
-def case_resolved(task_response):
-   """
-   The task response is the result of the task. Use this function only after you have successfully completed the task. 
 
-   Args:
-      task_response: The result of the task.
-   """
-   return task_response
+
+def case_resolved(task_response):
+    """
+    标记任务已成功完成。
+
+    仅当你验证任务要求已全部满足后才可使用此函数。
+
+    参数:
+        task_response: 已完成任务的输出或结果。
+    """
+    return task_response
+
 
 def case_not_resolved(failure_reason):
-   """
-   The failure reason is the reason why you cannot find a solution to the task. You can use this function only after you have tried multiple times and still cannot find a solution.
+    """
+    标记任务在多次尝试后仍无法完成。
 
-   Args:
-      failure_reason: The reason why you cannot find a solution to the task.
-   """
-   return failure_reason
+    仅当你已经穷尽合理方案且无法找到可行解法时才可使用此函数。
+
+    参数:
+        failure_reason: 描述任务为何无法解决的原因。
+    """
+    return failure_reason
+
    
 @register_agent("get_ml_agent")
 def get_ml_agent(model: str, **kwargs):
+    """
+    用于创建机器学习智能体的工厂函数。
+
+    参数:
+        model: 智能体使用的语言模型名称。
+        **kwargs: 额外参数，包括可选的 'code_env'（DockerEnv 类型），
+                  用于提供执行沙箱环境。
+
+    返回:
+        使用指定模型和工具配置的 Agent 实例，如有提供代码环境，
+        相关工具会被包装适配。
+    """
+    # 从关键字参数中提取可选的 Docker 执行环境
     code_env: DockerEnv = kwargs.get("code_env", None)
+
     def instructions(context_variables):
-      working_dir = context_variables.get("working_dir", None)
-      return f"""\
+        """
+        动态生成智能体的系统提示。
+
+        提示中会嵌入来自上下文变量中工作目录信息，
+        并为智能体如何组织与实现机器学习项目提供详细指导。
+        """
+        working_dir = context_variables.get("working_dir", None)
+        return f"""\
 You are a machine learning engineer tasked with implementing innovative ML projects. Your workspace is: `/{working_dir}`.
 
 OBJECTIVE:
@@ -88,15 +118,29 @@ Remember: Your goal is to create a well-organized, self-contained project that:
 4. Maintains its own coherent structure
 5. You should intergrate ALL acacdemic definition and their code implementation into the project.
 """
-    tools = [gen_code_tree_structure, execute_command, read_file, create_file, write_file, list_files, create_directory, run_python, case_resolved, case_not_resolved, terminal_page_down, terminal_page_up, terminal_page_to]
-    tools = [with_env(code_env)(tool) if 'env' in signature(tool).parameters else tool for tool in tools]
-    
-    return Agent(
-    name="Machine Learning Agent",
-    model=model,
-    instructions=instructions,
-    functions=tools,
-    tool_choice = "required", 
-    parallel_tool_calls = False
-    )
 
+    # 智能体可用的全部工具列表
+    tools = [
+        gen_code_tree_structure, execute_command, read_file, create_file,
+        write_file, list_files, create_directory, run_python,
+        case_resolved, case_not_resolved,
+        terminal_page_down, terminal_page_up, terminal_page_to
+    ]
+
+    # 为需要访问 Docker 环境的工具进行包装。
+    # 如果工具的签名中包含 'env' 参数，则使用提供的 code_env 进行包装；
+    # 否则直接使用原工具。
+    tools = [
+        with_env(code_env)(tool) if 'env' in signature(tool).parameters else tool
+        for tool in tools
+    ]
+
+    # 构建并返回带有组装好配置的 Agent 实例
+    return Agent(
+        name="Machine Learning Agent",
+        model=model,
+        instructions=instructions,
+        functions=tools,
+        tool_choice="required",   # 要求智能体每一轮都必须调用某个工具
+        parallel_tool_calls=False # 一次只执行一个工具调用
+    )
