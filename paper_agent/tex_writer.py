@@ -87,7 +87,7 @@ def compile_latex_project(project_dir, main_tex_file):
         # print(result3.stdout)
         # print(result3.stderr)
         
-        # 检查PDF
+        # 检查PD
         pdf_file = base_name + '.pdf'
         if os.path.exists(pdf_file):
             print(f"✅ PDF生成成功: {os.path.join(project_dir, pdf_file)}")
