@@ -401,5 +401,7 @@ if __name__ == "__main__":
 INPUT:
 You are given an innovative idea:
 Combine DDPM model with transformer model to generate the image.
+你获得了一个创新的想法：
+将DDPM模型与Transformer模型相结合来生成图像。
 ...
 """
