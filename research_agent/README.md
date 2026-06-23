@@ -399,14 +399,50 @@ bash run_infer_level_1.sh
 [inno/cli.py](./inno/cli.py) 提供底层 CLI，用于单独调试某个 Agent：
 
 ```bash
-cd research_agent
-python -m inno.cli agent \
-  --model=gpt-4o-2024-08-06 \
-  --agent_func=get_prepare_agent \
-  --query="..."
+### 7.4 单 Agent 调试（CLI）
+
+Prepare Agent 依赖 **Docker**（会在容器内 `git clone` 仓库）。DeepSeek 需在根目录 `.env` 配置：
+
+```bash
+DEEPSEEK_API_KEY=sk-你的密钥
+API_BASE_URL=https://api.deepseek.com
+CHEEP_MODEL=deepseek/deepseek-chat
+GITHUB_AI_TOKEN=ghp_你的GitHubToken   # git clone 需要
+BASE_IMAGES=tjbtech1/airesearcher:v1
+PORT=7020
 ```
 
-> 注意：CLI 默认从 `metachain.agents` 导入，与当前 `research_agent.inno.agents` 路径不一致，可能需要调整 `agent_func` 的 import 路径后才能使用。
+**完整可执行命令**（仓库根目录已安装依赖、`docker ps` 正常）：
+
+```bash
+cd research_agent
+
+# 1. 拉取镜像（首次）
+docker pull tjbtech1/airesearcher:v1
+
+# 2. 运行 Prepare Agent（DeepSeek + rotation_vq 测试 query）
+python -m inno.cli agent \
+  --model=deepseek/deepseek-chat \
+  --agent_func=get_prepare_agent \
+  --container_name=paper_eval_cli_vq \
+  --port=7020 \
+  --query="$(cat cli_debug/prepare_agent_query_rotation_vq.txt)" \
+  working_dir=workplace \
+  date_limit=2024-12-31
+```
+
+说明：
+
+| 项 | 值 |
+|----|-----|
+| 模型 | `deepseek/deepseek-chat`（LiteLLM 格式；内部走非原生 FC 转换） |
+| `--query` | 见 [`cli_debug/prepare_agent_query_rotation_vq.txt`](./cli_debug/prepare_agent_query_rotation_vq.txt)，结构与 `run_infer_plan.py` 中 Prepare 阶段一致 |
+| `working_dir` | 对应容器内 `/workplace`，Agent 在此 clone 仓库 |
+| `date_limit` | GitHub 搜索日期上限（query 内已含模拟搜索结果，此项为 context 默认值） |
+
+> 该测试会真实 clone 5+ 个 GitHub 仓库到 Docker 工作区，耗时较长并消耗 DeepSeek API 额度。若仅验证 LLM 连通性，可改用 `--no-init-docker` 配合不依赖 Docker 的 agent（Prepare Agent 必须带 Docker）。
+
+旧版 CLI 从 `metachain.agents` 导入的问题已修复，现从 `research_agent.inno.registry` 加载 agent。
 
 ---
 

@@ -1,0 +1,58 @@
+You are given a list of papers, searching results of the papers on GitHub, and innovative ideas according to the papers.
+
+List of papers:
+Title: Neural discrete representation learning; You can use this paper in the following way: foundational VQ-VAE framework for discrete representation learning
+Title: Straightening out the straight-through estimator: Overcoming optimization challenges in vector quantized networks; You can use this paper in the following way: STE baseline and its limitations in VQ training
+Title: Estimating or propagating gradients through stochastic neurons for conditional computation; You can use this paper in the following way: original straight-through estimator for non-differentiable layers
+Title: Vector-quantized image modeling with improved VQGAN; You can use this paper in the following way: improved VQGAN architecture for image modeling
+Title: Finite scalar quantization: Vq-vae made simple; You can use this paper in the following way: alternative quantization method for stable VQ-VAE training
+
+Searching results of the papers on GitHub:
+
+The results of searching vector quantization VQ-VAE pytorch on GitHub:
+        Name: cfifty/rotation_trick
+        Description: Official implementation of the Rotation Trick for VQ-VAE gradient propagation
+        Link: https://github.com/cfifty/rotation_trick
+        Stars: 45
+        Created at: 2024-09-15T00:00:00Z
+        Language: Python
+
+        Name: CompVis/taming-transformers
+        Description: Taming Transformers for High-Resolution Image Synthesis (VQGAN)
+        Link: https://github.com/CompVis/taming-transformers
+        Stars: 6200
+        Created at: 2020-12-01T00:00:00Z
+        Language: Python
+
+        Name: deepmind/sonnet
+        Description: Neural network library built on TensorFlow (historical VQ-VAE implementations referenced)
+        Link: https://github.com/deepmind/sonnet
+        Stars: 9800
+        Created at: 2017-04-01T00:00:00Z
+        Language: Python
+
+        Name: pytorch/examples
+        Description: PyTorch examples including generative model baselines
+        Link: https://github.com/pytorch/examples
+        Stars: 22000
+        Created at: 2017-01-01T00:00:00Z
+        Language: Python
+
+        Name: google-research/google-research
+        Description: Google Research code releases including vector quantization related work
+        Link: https://github.com/google-research/google-research
+        Stars: 35000
+        Created at: 2018-06-01T00:00:00Z
+        Language: Python
+
+        Name: microsoft/DeepSpeed
+        Description: Deep learning optimization library useful for training VQ-VAE at scale
+        Link: https://github.com/microsoft/DeepSpeed
+        Stars: 34000
+        Created at: 2019-05-01T00:00:00Z
+        Language: Python
+
+innovative ideas:
+We propose the Rotation Trick for VQ-VAEs: instead of the straight-through estimator (STE), propagate gradients through the vector quantization layer by smoothly transforming each encoder output into its nearest codebook vector via a rotation and rescaling linear transformation (treated as constant during backprop). This preserves the angle between the gradient and codebook vector, improving reconstruction quality, codebook utilization, and reducing quantization error across multiple VQ-VAE training paradigms.
+
+Your task is to choose at least 5 repositories as the reference codebases.
